@@ -16,10 +16,14 @@ connectDB();
 // Updated CORS configuration
 app.use(cors({
   origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000'
-  ],
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://your-frontend-domain.onrender.com', // Replace with real frontend URL
+  'https://your-frontend.vercel.app',         // If using Vercel
+  'https://your-frontend.netlify.app'         // If using Netlify
+],
+
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
