@@ -19,9 +19,7 @@ app.use(cors({
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://your-frontend-domain.onrender.com', // Replace with real frontend URL
-  'https://your-frontend.vercel.app',         // If using Vercel
-  'https://your-frontend.netlify.app'         // If using Netlify
+  'https://authmail-frontend.onrender.com', // Replace with real frontend URL 
 ],
 
   credentials: true,
