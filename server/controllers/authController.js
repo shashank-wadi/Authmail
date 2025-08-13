@@ -4,79 +4,84 @@ import userModel from '../models/userModel.js';
 import transporter from '../config/nodemailer.js';
 
 export const register = async (req, res) => {
-    const { name, email, password } = req.body;
+  const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-        return res.json({ success: false, Message: 'Missing details' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ success: false, message: 'Missing details' });
+  }
+
+  try {
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'User already exists' });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new userModel({ name, email, password: hashedPassword });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    // Try to send the welcome email, but don't fail registration if it errors.
     try {
-        const existingUser = await userModel.findOne({ email });
-        if (existingUser) {
-            return res.json({ success: false, Message: "User already exists" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new userModel({ name, email, password: hashedPassword });
-        await user.save();
-
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
-        // Send welcome email
-        const mailOptions = {
-            from: process.env.sender_email,
-            to: email,
-            subject: 'Welcome To My MERN-Website',
-            text: `Welcome to MERN-Website. Your account has been created with the email id: ${email}`
-        };
-
-        console.log('Mail options set:', mailOptions);
-
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent:', info.response);
-
-        return res.json({ success: true, Message: 'User registered and email sent successfully' });
-
-    } catch (error) {
-        console.error('Error:', error);
-        res.json({ success: false, Message: error.message });
+      const mailOptions = {
+        from: process.env.SENDER_EMAIL || process.env.sender_email, // support either env var
+        to: email,
+        subject: 'Welcome To My MERN-Website',
+        text: `Welcome to MERN-Website. Your account has been created with the email id: ${email}`
+      };
+      await transporter.sendMail(mailOptions);
+    } catch (mailErr) {
+      // Log and continue; user is already registered successfully.
+      console.error('Welcome email failed:', mailErr?.message || mailErr);
     }
+
+    return res.status(201).json({ success: true, message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Register error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 export const login = async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.json({ success: false, Message: 'Email and password are required' });
-    }
-    try {
-        const user = await userModel.findOne({ email });
-        if (!user) {
-            return res.json({ success: false, Message: 'Invalid email' });
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.json({ success: false, Message: 'Invalid password' });
-        }
-        const token = jwt.sign({ id: user._id }, process.env.jwt_secret, { expiresIn: '7d' });
+  const { email, password } = req.body;
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-        return res.json({ success: true });
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
 
-    } catch (error) {
-        return res.json({ success: false, Message: error.message });
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email' });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid password' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({ success: true, message: 'Login successful' });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 export const logout = async (req, res) => {
