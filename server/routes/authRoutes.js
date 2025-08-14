@@ -13,6 +13,6 @@ authRouter.post('/verify-account', userAuth, verifyEmail);
 authRouter.get('/is-auth', userAuth, isAuthenticated);
 authRouter.post('/send-reset-otp', sendRestOtp);
 authRouter.post('/reset-password', resetPassword);
-authRouter.post('/verify-otp', verifyOtp); // Add this line for OTP verification
+authRouter.post('/verify-otp', verifyOtp);
 
 export default authRouter;

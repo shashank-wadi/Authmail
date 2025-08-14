@@ -7,15 +7,15 @@ import { toast } from "react-toastify";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { userData, backendUrl, setUserData, setIsLoggedin } = useContext(AppContext);
+  const { userData, backendUrl, setUserData, setIsLoggedin, getUserData } = useContext(AppContext);
 
   const sendVerificationOtp = async () => {
     try {
       axios.defaults.withCredentials = true;
-      const { data } = await axios.post(backendUrl + '/api/auth/send-verify-otp');
+      const { data } = await axios.post(`${backendUrl}/api/auth/send-verify-otp`);
       if (data.success) {
-        navigate('/email-verify');
         toast.success(data.message);
+        navigate("/email-verify");
       } else {
         toast.error(data.message);
       }
@@ -27,11 +27,11 @@ const Navbar = () => {
   const logout = async () => {
     try {
       axios.defaults.withCredentials = true;
-      const { data } = await axios.post(backendUrl + '/api/auth/logout');
+      const { data } = await axios.post(`${backendUrl}/api/auth/logout`);
       if (data.success) {
         setIsLoggedin(false);
         setUserData(null);
-        navigate('/');
+        navigate("/");
       }
     } catch (error) {
       toast.error(error.message);
@@ -39,11 +39,11 @@ const Navbar = () => {
   };
 
   return (
-    <div className="w-full justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0">
+    <div className="w-full justify-between items-center p-4 sm:p-6 sm:px-24 absolute top-0 flex">
       <img src={assets.logo} alt="Logo" className="w-28 sm:w-32" />
+
       {userData ? (
         <div>
-          {/* Conditional rendering for verification status */}
           {!userData.isAccountVerified ? (
             <div className="text-red-600 text-sm mb-2">
               Please verify your email to fully activate your account.
@@ -58,7 +58,10 @@ const Navbar = () => {
             <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10">
               <ul className="list-none m-0 p-2 bg-gray-100 text-sm">
                 {!userData.isAccountVerified && (
-                  <li onClick={sendVerificationOtp} className="py-1 px-2 hover:bg-gray-200">
+                  <li
+                    onClick={sendVerificationOtp}
+                    className="py-1 px-2 hover:bg-gray-200"
+                  >
                     Verify Email
                   </li>
                 )}

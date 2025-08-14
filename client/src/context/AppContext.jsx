@@ -1,61 +1,69 @@
+import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
-import { createContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
-// Create context
 export const AppContext = createContext();
 
-export const AppContextProvider = (props) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL; // Ensure correct name
-  const [isLoggedin, setIsLoggedin] = useState(false);
-  const [userData, setUserData] = useState(null);  // Initialize as null to reflect no user data initially
+export const AppContextProvider = ({ children }) => {
+  const [userData, setUserData] = useState(null);
+  const [isLoggedIn, setIsLoggedin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const backendUrl = "http://localhost:4000";
 
-  // Function to check authentication state
-  const getAuthstate = async () => {
+  axios.defaults.withCredentials = true;
+
+  // Fetch user data
+  const getUserData = async () => {
     try {
-      const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`);
+      setIsLoading(true);
+      const { data } = await axios.get(`${backendUrl}/api/user/data`);
       if (data.success) {
+        setUserData(data.user);
         setIsLoggedin(true);
-        await getUserData();
       } else {
+        setUserData(null);
         setIsLoggedin(false);
       }
     } catch (error) {
-      toast.error("Error checking authentication: " + error.message);
+      console.error("Error fetching user data:", error);
+      setUserData(null);
+      setIsLoggedin(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Function to get user data
-  const getUserData = async () => {
-    try {
-      const { data } = await axios.get(`${backendUrl}/api/user/data`);
-      if (data.success) {
-        setUserData(data.userData);
-      } else {
-        toast.error("Error fetching user data: " + data.message);
-      }
-    } catch (error) {
-      toast.error("Error fetching user data: " + error.message);
-    }
+  // Login function to be used after successful authentication
+  const login = async () => {
+    await getUserData();
   };
 
+  // Logout function
+  const logout = () => {
+    setUserData(null);
+    setIsLoggedin(false);
+  };
+
+  // Run once on mount to check if user is already logged in
   useEffect(() => {
-    getAuthstate();
-  }, []);  // Run only once on mount to get authentication state
-
-  const value = {
-    backendUrl,
-    isLoggedin,
-    setIsLoggedin,
-    userData,
-    setUserData,
-    getUserData,
-    getAuthstate
-  };
+    getUserData();
+  }, []);
 
   return (
-    <AppContext.Provider value={value}>
-      {props.children}
+    <AppContext.Provider
+      value={{
+        backendUrl,
+        userData,
+        setUserData,
+        isLoggedIn,
+        setIsLoggedin,
+        getUserData,
+        login,
+        logout,
+        isLoading
+      }}
+    >
+      {children}
     </AppContext.Provider>
   );
 };

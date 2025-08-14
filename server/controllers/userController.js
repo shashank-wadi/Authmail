@@ -1,17 +1,14 @@
-import userModel from "../models/userModel.js";
-
+import userModel from '../models/userModel.js';
 export const getUserData = async (req, res) => {
     try {
-        const { userId } = req.body;  // Ensure userId is sent from frontend
-        const user = await userModel.findById(userId);
-
+        const user = await userModel.findById(req.userId);
         if (!user) {
             return res.json({ success: false, message: 'User not found' });
         }
 
-        res.json({ 
+        res.json({
             success: true,
-            userData: {  
+            user: {
                 name: user.name,
                 isAccountVerified: user.isAccountVerified
             }
