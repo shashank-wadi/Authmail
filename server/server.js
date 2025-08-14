@@ -13,12 +13,18 @@ connectDB();
 app.use(express.json());
 app.use(cookieParser());
 
+
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    credentials: true,
+    origin: [
+      "http://localhost:5173",
+      "https://authmail-client.vercel.app"
+    ],
+    credentials: true
   })
 );
+
 
 // Routes
 app.get("/", (req, res) => res.send("App working fine"));
