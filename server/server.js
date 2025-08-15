@@ -19,7 +19,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://authmail-client.vercel.app"
+      "https://authmail-server.vercel.app/"
     ],
     credentials: true
   })
