@@ -10,7 +10,7 @@ import { AppContextProvider } from './context/AppContext'; // Import the context
 
 const MyComponent = () => {
   return (
-    <AppContextProvider> {/* Wrap the app with the context provider */}
+    <AppContextProvider>
       <div>
         <ToastContainer />
         <Routes>

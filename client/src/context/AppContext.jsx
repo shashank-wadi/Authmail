@@ -8,8 +8,7 @@ export const AppContextProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [isLoggedIn, setIsLoggedin] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
-  const backendUrl = "https://authmail-server.vercel.app";
-
+const backendUrl = import.meta.env.PROD ? "https://authmail-server.vercel.app" : "http://localhost:4000";
   axios.defaults.withCredentials = true;
 
   // Fetch user data
