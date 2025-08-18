@@ -1,76 +1,71 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const AppContext = createContext();
 
-export const AppContextProvider = ({ children }) => {
-  const [userData, setUserData] = useState(null);
+export const AppContextProvider = (props) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [isLoggedIn, setIsLoggedin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
-  // Auto-switch backend URL for local vs Vercel
-  const backendUrl =
-    process.env.NODE_ENV === "production"
-      ? "https://authmail-server.vercel.app"
-      : "http://localhost:4000";
 
-  axios.defaults.withCredentials = true; // Send cookies automatically
-
-  const getUserData = async (silent = false) => {
+  const getAuthState = async () => {
     try {
-      setIsLoading(true);
-      const { data } = await axios.get(`${backendUrl}/api/user/data`);
+      const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`, {
+        withCredentials: true,
+      });
 
       if (data.success) {
-        setUserData(data.user);
         setIsLoggedin(true);
+        getUserData();
       } else {
-        setUserData(null);
         setIsLoggedin(false);
+        setUserData(null);
       }
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        // Not logged in - only log if not silent
-        if (!silent) console.warn("User not logged in yet.");
-        setUserData(null);
-        setIsLoggedin(false);
-      } else {
-        console.error("Error fetching user data:", error);
-      }
-    } finally {
-      setIsLoading(false);
+      setIsLoggedin(false);
+      setUserData(null);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
-  const login = async () => {
-    await getUserData(); // Re-fetch after successful login
+  
+  const getUserData = async () => {
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/user/data`, {
+        withCredentials: true,
+      });
+
+  
+
+      if (data.success) {
+        
+        setUserData(data.userData || data.user || null);
+      } else {
+        setUserData(null);
+        toast.error(data.message);
+      }
+    } catch (error) {
+      setUserData(null);
+      toast.error(error.response?.data?.message || error.message);
+    }
   };
 
-  const logout = () => {
-    setUserData(null);
-    setIsLoggedin(false);
-  };
-
-  // Run only once, silently (no error spam if not logged in)
   useEffect(() => {
-    getUserData(true);
+    getAuthState();
   }, []);
 
+  const value = {
+    backendUrl,
+    isLoggedIn,
+    setIsLoggedin,
+    userData,
+    setUserData,
+    getUserData,
+  };
+
   return (
-    <AppContext.Provider
-      value={{
-        backendUrl,
-        userData,
-        setUserData,
-        isLoggedIn,
-        setIsLoggedin,
-        getUserData,
-        login,
-        logout,
-        isLoading,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+    <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
   );
 };
