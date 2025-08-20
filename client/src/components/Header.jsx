@@ -12,7 +12,7 @@ const Header = () => {
             Hey {userData?.name || 'Developer'}  
             <img className='w-8 aspect-square' src={assets.hand_wave} />
         </h1>
-        <h2 className='text-3xl sm:text-5xl font-semibold mb-4'>Welcome to our app</h2>
+        <h2 className='text-3xl sm:text-5xl font-semibold mb-4'>Welcome to our Website</h2>
     </div>
   );
 };
